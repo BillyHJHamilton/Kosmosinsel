@@ -1,0 +1,8 @@
+- End of turn / rally
+- Fighters!!
+- Assign new flagship?
+- Morale check before attack?
+- Morale check whenever receiving fire?
+- Autosave
+- Actually test save/restore :)
+- Disrupted unit can't attack, right?

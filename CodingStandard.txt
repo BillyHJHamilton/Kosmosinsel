@@ -1,0 +1,23 @@
+
+Prefixes
+
+Types:
+CClass
+SStruct
+EEnum
+IInterface
+TTemplate
+tTypedef
+
+Variables:
+m_Member
+s_Static (in class or function)
+g_GlobalStatic
+c_Constant (using static constexpr)
+f_BitFlagConstant
+localVariable (or parameter)
+
+Function()
+DMacro()
+
+L_Label (for goto)
