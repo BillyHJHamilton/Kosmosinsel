@@ -7,10 +7,22 @@ public:
 	~CColourScope();
 };
 
+class CDarkGreyScope : public CColourScope
+{
+public:
+	CDarkGreyScope() : CColourScope("90") {}
+};
+
 class CRedScope : public CColourScope
 {
 public:
 	CRedScope() : CColourScope("91") {}
+};
+
+class CGreenScope : public CColourScope
+{
+public:
+	CGreenScope() : CColourScope("92") {}
 };
 
 class CYellowScope : public CColourScope
@@ -23,10 +35,4 @@ class CMagentaScope : public CColourScope
 {
 public:
 	CMagentaScope() : CColourScope("95") {}
-};
-
-class CDarkGreyScope : public CColourScope
-{
-public:
-	CDarkGreyScope() : CColourScope("90") {}
 };

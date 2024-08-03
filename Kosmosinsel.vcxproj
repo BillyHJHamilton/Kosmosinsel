@@ -142,7 +142,7 @@
     <ClInclude Include="Output.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="SaveFleet.h" />
-    <ClInclude Include="UnitQuality.h" />
+    <ClInclude Include="Quality.h" />
     <ClInclude Include="Unit.h" />
     <ClInclude Include="UnitType.h" />
     <ClInclude Include="Utility.h" />
@@ -162,7 +162,7 @@
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="SaveFleet.cpp" />
     <ClCompile Include="Unit.cpp" />
-    <ClCompile Include="UnitQuality.cpp" />
+    <ClCompile Include="Quality.cpp" />
     <ClCompile Include="UnitType.cpp" />
     <ClCompile Include="Utility.cpp" />
   </ItemGroup>

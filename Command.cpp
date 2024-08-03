@@ -21,6 +21,8 @@ const static std::string s_CommandString [(int32_t)ECommand::Count]
 	"stat",
 	"test",
 
+	"end",
+
 	"undo",
 	"load",
 	"save",
@@ -79,6 +81,9 @@ void HandleCommand(CGame& game)
 		break;
 	case ECommand::Test:
 		HandleTest(line, game, subjectList);
+		break;
+	case ECommand::End:
+		HandleEnd(line, stream, game);
 		break;
 	case ECommand::Undo:
 		HandleUndo(game);
@@ -310,6 +315,37 @@ void HandleTest(std::string& line, CGame& game, const SUnitFlagList& subjectList
 	{
 		TestMoraleForDisruption(*unit);
 	}
+}
+
+void HandleEnd(std::string& line, std::stringstream& stream, CGame& game)
+{
+	int32_t teamId;
+	stream >> teamId;
+	if (!stream)
+	{
+		std::cout << "You must specify the team to end turn." << std::endl;
+		return;
+	}
+
+	STeam* team = game.FindTeam(teamId);
+	if (!team)
+	{
+		std::cout << "Team " << teamId << " does not exist." << std::endl;
+		return;
+	}
+
+	game.PushHistory(line);
+	for (SCommandGroup& cg : team->m_CommandGroups)
+	{
+		for (SUnit& u : cg.m_Units)
+		{
+			if (IsFlagSet(u.m_StatusFlags, f_Disrupted))
+			{
+				TryToRally(u);
+			}
+		}
+	}
+	std::cout << "Done." << std::endl;
 }
 
 void HandleUndo(CGame& game)

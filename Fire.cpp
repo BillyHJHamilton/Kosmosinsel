@@ -40,7 +40,8 @@ void ApplyFire(SUnit& attacker, SUnit& target, EFireRange range, Flag fireFlags,
 		* rangeFactor * flankFactor
 		* Random(0.5f, 1.5f);
 
-	const bool testMorale = !IsFlagSet(target.m_StatusFlags, f_ReceivedFire);
+	const bool testMorale = !IsFlagSet(target.m_StatusFlags, f_ReceivedFire)
+		|| targetMoraleLoss > c_MoraleLostToTestDisruption;
 	ApplyDamage(target, targetDamage, targetMoraleLoss, testMorale, outDestroyEvents);
 	SetFlag(target.m_StatusFlags, f_ReceivedFire);
 

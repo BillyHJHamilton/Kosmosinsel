@@ -1,9 +1,9 @@
 #include "LoadFleet.h"
 #include "Formation.h"
 #include "Game.h"
+#include "Quality.h"
 #include "Unit.h"
 #include "UnitType.h"
-#include "UnitQuality.h"
 #include "Utility.h"
 #include <cfloat>
 #include <iostream>
@@ -91,7 +91,7 @@ void CFleetLoader::ProcessUnit(std::stringstream& stream, CGame& game, int32_t u
 	newUnit.m_Type = type;
 
 	// Defaults which may be overridden
-	newUnit.m_Quality = EUnitQuality::Standard;
+	newUnit.m_Quality = EQuality::Standard;
 	newUnit.m_Formation = EFormation::Line;
 	newUnit.m_Strength = FLT_MAX;
 	newUnit.m_Morale = FLT_MAX;
@@ -122,10 +122,10 @@ void CFleetLoader::ProcessUnitArgument(std::stringstream& stream, SUnit& unit)
 	if (stream)
 	{
 		LowercaseInPlace(argument);
-		EUnitQuality quality = StrToQuality(argument);
+		EQuality quality = StrToQuality(argument);
 		EFormation formation = StrToFormation(argument);
 
-		if (quality != EUnitQuality::None)
+		if (quality != EQuality::None)
 		{
 			unit.m_Quality = quality;
 		}

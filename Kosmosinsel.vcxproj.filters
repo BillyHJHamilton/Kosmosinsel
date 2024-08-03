@@ -21,7 +21,7 @@
     <ClInclude Include="UnitType.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UnitQuality.h">
+    <ClInclude Include="Quality.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Formation.h">
@@ -71,7 +71,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="UnitQuality.cpp">
+    <ClCompile Include="Quality.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Formation.cpp">

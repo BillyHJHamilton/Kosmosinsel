@@ -18,6 +18,7 @@ static constexpr float c_FlagshipHitThreshold			= 0.9f;
 static constexpr float c_FlagshipHitFactor				= 1.2f;
 static constexpr float c_RoutThreshold					= 0.2f;
 static constexpr float c_DestroyedThreshold				= 0.1f;
+static constexpr float c_MoraleLostToTestDisruption		= 0.05f;
 
 // Morale effects
 static constexpr float c_DisruptionMoralePenalty		= 0.2f;

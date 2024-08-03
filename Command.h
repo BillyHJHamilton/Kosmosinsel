@@ -70,6 +70,8 @@ enum class ECommand
     Stat,
     Test,
 
+    End,
+
     Undo,
     Load,
     Save,
@@ -97,6 +99,7 @@ void HandleAttack(std::string& line, CGame& game, const SUnitFlagList& subjectLi
 void HandleForm(std::string& line, CGame& game, const SUnitFlagList& subjectList, EFormation formation);
 void HandleStat(std::string& line, CGame& game, const SUnitFlagList& subjectList);
 void HandleTest(std::string& line, CGame& game, const SUnitFlagList& subjectList);
+void HandleEnd(std::string& line, std::stringstream& stream, CGame& game);
 void HandleUndo(CGame& game);
 void HandleLoad(std::stringstream& stream, CGame& game);
 void HandleSave(std::stringstream& stream, CGame& game);

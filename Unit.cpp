@@ -1,7 +1,7 @@
 #include "Unit.h"
 
 #include "Formation.h"
-#include "UnitQuality.h"
+#include "Quality.h"
 #include "UnitType.h"
 #include <sstream>
 #include <iomanip>
