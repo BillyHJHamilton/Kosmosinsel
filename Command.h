@@ -2,7 +2,7 @@
 
 /*
 Command format:
-(command) (subject) (target)
+(subject) (command) (target)
 
 Subject:
 The subject of a command is normally or more units, separated by commas: 100,110
