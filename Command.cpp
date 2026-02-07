@@ -2,13 +2,16 @@
 
 #include "Attack.h"
 #include "Damage.h"
+#include "Fighters.h"
 #include "Fire.h"
 #include "Formation.h"
 #include "Game.h"
 #include "LoadFleet.h"
 #include "Morale.h"
 #include "SaveFleet.h"
+#include "UnitType.h"
 #include "Utility.h"
+#include <cassert>
 #include <fstream>
 #include <iostream>
 
@@ -20,6 +23,11 @@ const static std::string s_CommandString [(int32_t)ECommand::Count]
 	"form",
 	"stat",
 	"test",
+
+	"launch",
+	"strike",
+	"defend",
+	"recall",
 
 	"end",
 
@@ -82,6 +90,18 @@ void HandleCommand(CGame& game)
 	case ECommand::Test:
 		HandleTest(line, game, subjectList);
 		break;
+	case ECommand::Launch:
+		HandleLaunch(line, game, subjectList);
+		break;
+	case ECommand::Strike:
+		HandleStrike(line, game, subjectList, TryParseUnitFlagList(stream, game));
+		break;
+	case ECommand::Defend:
+		HandleDefend(line, game, subjectList, TryParseUnitFlagList(stream, game));
+		break;
+	case ECommand::Recall:
+		HandleRecall(line, game, subjectList);
+		break;
 	case ECommand::End:
 		HandleEnd(line, stream, game);
 		break;
@@ -97,6 +117,8 @@ void HandleCommand(CGame& game)
 	case ECommand::Quit:
 		HandleQuit(game);
 		break;
+	default:
+		std::cout << "Unhandled case." << std::endl;
 	}
 };
 
@@ -165,6 +187,39 @@ EFormation TryParseFormation(std::stringstream& stream)
 	return EFormation::None;
 }
 
+bool AreTeamsDistinct(const std::vector<SUnit*>& a, const std::vector<SUnit*>& b)
+{
+	if (a.empty() || b.empty())
+	{
+		return false;
+	}
+
+	int32_t teamA = a[0]->m_Team;
+	int32_t teamB = b[0]->m_Team;
+
+	if (teamA == teamB)
+	{
+		return false;
+	}
+
+	for (int32_t i = 1; i < a.size(); ++i)
+	{
+		if (a[i]->m_Team != teamA)
+		{
+			return false;
+		}
+	}
+	for (int32_t i = 1; i < b.size(); ++i)
+	{
+		if (b[i]->m_Team != teamB)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void HandleFire(std::string& line, CGame& game, const SUnitFlagList& subjectList, const SUnitFlagList& targetList, EFireRange range)
 {
 	if (subjectList.m_UnitList.empty())
@@ -182,6 +237,12 @@ void HandleFire(std::string& line, CGame& game, const SUnitFlagList& subjectList
 	if (common != nullptr)
 	{
 		std::cout << "Unit " << common->m_Id << " cannot fire at itself." << std::endl;
+		return;
+	}
+
+	if (!AreTeamsDistinct(subjectList.m_UnitList, targetList.m_UnitList))
+	{
+		std::cout << "Attacking units and target units do not form distinct teams." << std::endl;
 		return;
 	}
 
@@ -251,6 +312,12 @@ void HandleAttack(std::string& line, CGame& game, const SUnitFlagList& subjectLi
 		return;
 	}
 
+	if (!AreTeamsDistinct(subjectList.m_UnitList, targetList.m_UnitList))
+	{
+		std::cout << "Attacking units and target units do not form distinct teams." << std::endl;
+		return;
+	}
+
 	for (SUnit* u : attackingUnits)
 	{
 		if (IsFlagSet(u->m_StatusFlags, f_Acted))
@@ -260,9 +327,19 @@ void HandleAttack(std::string& line, CGame& game, const SUnitFlagList& subjectLi
 		}
 	}
 
+	// Find all relevant fighters.
+	std::vector<SUnit*> attackingFighters = GetAllDefendingUnits(game, attackingUnits);
+	std::vector<SUnit*> fightersStrikingDefenders = GetAllStrikingUnits(game, defendingUnits, attackingUnits[0]->m_Team);
+	attackingFighters.insert(attackingFighters.end(), fightersStrikingDefenders.begin(), fightersStrikingDefenders.end());
+	std::vector<SUnit*> defendingFighters = GetAllDefendingUnits(game, defendingUnits);
+	std::vector<SUnit*> fightersStrikingAttackers = GetAllStrikingUnits(game, attackingUnits, defendingUnits[0]->m_Team);
+	defendingFighters.insert(defendingFighters.end(), fightersStrikingAttackers.begin(), fightersStrikingAttackers.end());
+
 	game.PushHistory(line);
 	SDestroyEvents destroyEvents;
-	ApplyAttack(attackingUnits, subjectList.m_FlagList, defendingUnits, targetList.m_FlagList, destroyEvents);
+	ApplyAttack(attackingUnits, subjectList.m_FlagList, attackingFighters,
+		defendingUnits, targetList.m_FlagList, defendingFighters,
+		destroyEvents);
 	HandleDestroyEvents(game, destroyEvents);
 }
 
@@ -317,6 +394,232 @@ void HandleTest(std::string& line, CGame& game, const SUnitFlagList& subjectList
 	}
 }
 
+void HandleLaunch(std::string& line, CGame& game, const SUnitFlagList& subjectList)
+{
+	if (subjectList.m_UnitList.empty())
+	{
+		std::cout << "You must specify the unit(s) to launch fighters." << std::endl;
+		return;
+	}
+
+	for (SUnit* u : subjectList.m_UnitList)
+	{
+		if (SUnitTypeStats::Get(u->m_Type).m_Fighters < c_Epsilon)
+		{
+			std::cout << "Unit " << u->m_Id << " is " << UnitTypeToStr(u->m_Type)
+				<< ", which do not carry fighters." << std::endl;
+			return;
+		}
+		if (!HasSurvivingFighters(*u))
+		{
+			std::cout << "Unit " << u->m_Id << " has no fighters left!" << std::endl;
+			return;
+		}
+
+		if (u->m_FighterState != EFighterState::Docked)
+		{
+			std::cout << "Unit " << u->m_Id << " does not have docked fighters." << std::endl;
+			return;
+		}
+	}
+
+	game.PushHistory(line);
+	for (SUnit* unit : subjectList.m_UnitList)
+	{
+		unit->m_FighterState = EFighterState::Launching;
+	}
+	std::cout << "Launching fighters!" << std::endl;
+}
+
+void HandleStrike(std::string& line, CGame& game, const SUnitFlagList& subjectList, const SUnitFlagList& targetList)
+{
+	if (subjectList.m_UnitList.empty())
+	{
+		std::cout << "You must specify the unit(s) whose fighters should strike." << std::endl;
+		return;
+	}
+	if (targetList.m_UnitList.size() != 1)
+	{
+		std::cout << "You must provide a single target." << std::endl;
+		return;
+	}
+
+	for (SUnit* u : subjectList.m_UnitList)
+	{
+		if (SUnitTypeStats::Get(u->m_Type).m_Fighters < c_Epsilon)
+		{
+			std::cout << "Unit " << u->m_Id << " is " << UnitTypeToStr(u->m_Type)
+				<< ", which do not carry fighters." << std::endl;
+			return;
+		}
+		if (!HasSurvivingFighters(*u))
+		{
+			std::cout << "Unit " << u->m_Id << " has no fighters left!" << std::endl;
+			return;
+		}
+
+		if (u->m_FighterState == EFighterState::Docked)
+		{
+			std::cout << "Unit " << u->m_Id << " must launch fighters first." << std::endl;
+			return;
+		}
+
+		if (u->m_FighterState == EFighterState::Launching)
+		{
+			std::cout << "Unit " << u->m_Id << " is still launching its fighters." << std::endl;
+			return;
+		}
+
+		if (u->m_FighterState == EFighterState::Recalling)
+		{
+			std::cout << "Unit " << u->m_Id << " is already recalling its fighters to docking bays." << std::endl;
+			return;
+		}
+	}
+
+	const SUnit* const common = FindCommonElement(subjectList.m_UnitList, targetList.m_UnitList, (SUnit*)nullptr);
+	if (common != nullptr)
+	{
+		std::cout << "Unit " << common->m_Id << " cannot strike itself." << std::endl;
+		return;
+	}
+
+	game.PushHistory(line);
+
+	for (SUnit* unit : subjectList.m_UnitList)
+	{
+		unit->m_FighterState = EFighterState::Striking;
+		unit->m_FighterTarget = targetList.m_UnitList[0]->m_Id;
+	}
+
+	SDestroyEvents destroyEvents;
+	ApplyStrike(game, subjectList.m_UnitList, *targetList.m_UnitList[0], destroyEvents);
+	for (int i = 0; i < subjectList.m_UnitList.size(); ++i)
+	{
+		SUnit* f = subjectList.m_UnitList[i];
+
+	}
+	HandleDestroyEvents(game, destroyEvents);
+}
+
+void HandleDefend(std::string& line, CGame& game, const SUnitFlagList& subjectList, const SUnitFlagList& targetList)
+{
+	if (subjectList.m_UnitList.empty())
+	{
+		std::cout << "You must specify the unit(s) whose fighters should defend." << std::endl;
+		return;
+	}
+
+	if (targetList.m_UnitList.size() > 1)
+	{
+		std::cout << "Cannot defend multiple targets.  Specify no target to defend mother unit." << std::endl;
+		return;
+	}
+
+	for (SUnit* u : subjectList.m_UnitList)
+	{
+		if (SUnitTypeStats::Get(u->m_Type).m_Fighters < c_Epsilon)
+		{
+			std::cout << "Unit " << u->m_Id << " is " << UnitTypeToStr(u->m_Type)
+				<< ", which do not carry fighters." << std::endl;
+			return;
+		}
+		if (!HasSurvivingFighters(*u))
+		{
+			std::cout << "Unit " << u->m_Id << " has no fighters left!" << std::endl;
+			return;
+		}
+
+		if (u->m_FighterState == EFighterState::Docked)
+		{
+			std::cout << "Unit " << u->m_Id << " must launch fighters first." << std::endl;
+			return;
+		}
+
+		if (u->m_FighterState == EFighterState::Launching)
+		{
+			std::cout << "Unit " << u->m_Id << " is still launching its fighters." << std::endl;
+			return;
+		}
+
+		if (u->m_FighterState == EFighterState::Recalling)
+		{
+			std::cout << "Unit " << u->m_Id << " is already recalling its fighters to docking bays." << std::endl;
+			return;
+		}
+	}
+
+	game.PushHistory(line);
+	for (SUnit* unit : subjectList.m_UnitList)
+	{
+		unit->m_FighterState = EFighterState::Defending;
+		if (targetList.m_UnitList.size() == 1)
+		{
+			unit->m_FighterTarget = targetList.m_UnitList[0]->m_Id;
+		}
+		else
+		{
+			unit->m_FighterTarget = unit->m_Id;
+		}
+	}
+
+	if (targetList.m_UnitList.size() == 1)
+	{
+		std::cout << "Fighters will defend unit " << targetList.m_UnitList[0]->m_Id << "." << std::endl;
+	}
+	else
+	{
+		std::cout << "Fighters will defend their motherships." << std::endl;
+	}
+}
+
+void HandleRecall(std::string& line, CGame& game, const SUnitFlagList& subjectList)
+{
+	if (subjectList.m_UnitList.empty())
+	{
+		std::cout << "You must specify the unit(s) to recall fighters." << std::endl;
+		return;
+	}
+
+	for (SUnit* u : subjectList.m_UnitList)
+	{
+		if (SUnitTypeStats::Get(u->m_Type).m_Fighters < c_Epsilon)
+		{
+			std::cout << "Unit " << u->m_Id << " is " << UnitTypeToStr(u->m_Type)
+				<< ", which do not carry fighters." << std::endl;
+			return;
+		}
+		if (!HasSurvivingFighters(*u))
+		{
+			std::cout << "Unit " << u->m_Id << " has no fighters left!" << std::endl;
+			return;
+		}
+
+		if (u->m_FighterState == EFighterState::Docked)
+		{
+			std::cout << "Unit " << u->m_Id << " already has fighters docked." << std::endl;
+			return;
+		}
+		if (u->m_FighterState == EFighterState::Launching)
+		{
+			std::cout << "Unit " << u->m_Id << " is still launching its fighters." << std::endl;
+			return;
+		}
+		if (u->m_FighterState == EFighterState::Recalling)
+		{
+			std::cout << "Unit " << u->m_Id << " is already recalling its fighters." << std::endl;
+			return;
+		}
+	}
+
+	game.PushHistory(line);
+	for (SUnit* unit : subjectList.m_UnitList)
+	{
+		unit->m_FighterState = EFighterState::Recalling;
+	}
+	std::cout << "Recalling fighters to docking bays." << std::endl;
+}
+
 void HandleEnd(std::string& line, std::stringstream& stream, CGame& game)
 {
 	int32_t teamId;
@@ -343,9 +646,31 @@ void HandleEnd(std::string& line, std::stringstream& stream, CGame& game)
 			{
 				TryToRally(u);
 			}
+
+			ApplyFighterAttrition(u);
 		}
 	}
-	std::cout << "Done." << std::endl;
+
+	// Start of turn for next team.
+	STeam* followingTeam = game.FindFollowingTeam(teamId);
+	assert(followingTeam != nullptr);
+	std::cout << "Next is Team " << followingTeam->m_TeamId << std::endl;
+
+	for (SCommandGroup& cg : followingTeam->m_CommandGroups)
+	{
+		for (SUnit& u : cg.m_Units)
+		{
+			if (u.m_FighterState == EFighterState::Launching)
+			{
+				u.m_FighterState = EFighterState::Defending;
+				u.m_FighterTarget = u.m_Id;
+			}
+			else if (u.m_FighterState == EFighterState::Recalling)
+			{
+				u.m_FighterState = EFighterState::Docked;
+			}
+		}
+	}
 }
 
 void HandleUndo(CGame& game)

@@ -21,7 +21,7 @@ const T FindCommonElement(const std::vector<T>& a, const std::vector<T>& b, T va
 }
 
 template<typename KeyType, typename ValueType>
-ValueType* MapFind(std::unordered_map<KeyType,ValueType> map, KeyType key)
+ValueType* MapFind(std::unordered_map<KeyType,ValueType>& map, KeyType key)
 {
 	auto itr = map.find(key);
 	if (itr != map.end())

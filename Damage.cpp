@@ -1,6 +1,7 @@
 #include "Damage.h"
 
-#include "Fire.h"
+//#include "Fire.h"
+#include "Fighters.h"
 #include "Formation.h"
 #include "Game.h"
 #include "GameConstants.h"
@@ -53,6 +54,25 @@ void ApplyDamage(SUnit& unit, float strengthDamage, float moraleDamage, bool tes
 	}
 	else
 	{
+		if (HasSurvivingFighters(unit))
+		{
+			if (unit.m_FighterState == EFighterState::Docked)
+			{
+				const float fighterDamage = strengthDamage * c_FighterDamageWhenDocked * Random(0.0f, 2.0f);
+				ApplyFighterDamage(unit, fighterDamage);
+			}
+			else if (unit.m_FighterState == EFighterState::Launching)
+			{
+				const float fighterDamage = strengthDamage * c_FighterDamageWhenLaunching * Random(0.0f, 2.0f);
+				ApplyFighterDamage(unit, fighterDamage);
+			}
+			if (unit.m_FighterState == EFighterState::Recalling)
+			{
+				const float fighterDamage = strengthDamage * c_FighterDamageWhenRecalling * Random(0.0f, 2.0f);
+				ApplyFighterDamage(unit, fighterDamage);
+			}
+		}
+
 		CheckFlagshipDamage(unit, strengthDamage, strengthBefore, inOutDestroyEvents);
 		CheckMoraleEffects(unit, testDisruption);
 	}
@@ -72,8 +92,13 @@ void ApplyDamageMoraleOnly(SUnit& unit, float moraleDamage, bool testDisruption)
 		std::cout << std::fixed << std::setprecision(0)
 			<< unit.m_Id << " lost "
 			<< 100.0f*moraleDamage << "% morale (now "
-			<< 100.0f*unit.m_Morale << "%, effective "
-			<< 100.0f*GetEffectiveMorale(unit) << "%); strength is "
+			<< 100.0f*unit.m_Morale << "%";
+		const float effectiveMorale = GetEffectiveMorale(unit);
+		if (effectiveMorale != unit.m_Morale)
+		{
+			std::cout << ", effective " << 100.0f*GetEffectiveMorale(unit) << "%";
+		}
+		std::cout << "); strength is "
 			<< 100.0f*unit.m_Strength << "%; overall "
 			<< 100.0f*GetEffectiveMorale(unit)*unit.m_Strength << "%" << std::endl;
 	}

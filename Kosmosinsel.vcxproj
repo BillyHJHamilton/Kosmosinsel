@@ -132,6 +132,7 @@
     <ClInclude Include="Damage.h" />
     <ClInclude Include="Command.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="Fighters.h" />
     <ClInclude Include="Fire.h" />
     <ClInclude Include="Formation.h" />
     <ClInclude Include="Game.h" />
@@ -151,6 +152,7 @@
     <ClCompile Include="Attack.cpp" />
     <ClCompile Include="Command.cpp" />
     <ClCompile Include="Damage.cpp" />
+    <ClCompile Include="Fighters.cpp" />
     <ClCompile Include="Fire.cpp" />
     <ClCompile Include="Formation.cpp" />
     <ClCompile Include="Game.cpp" />

@@ -1,5 +1,6 @@
 #include "Unit.h"
 
+#include "Fighters.h"
 #include "Formation.h"
 #include "Quality.h"
 #include "UnitType.h"
@@ -19,6 +20,17 @@ std::string GetUnitStatusString(const SUnit& unit)
 		<< FormationToStr(unit.m_Formation) << " "
 		<< "strength " << unit.m_Strength << " "
 		<< "morale " << unit.m_Morale << " ";
+
+	if (SUnitTypeStats::Get(unit.m_Type).m_Fighters > 0)
+	{
+		out << "fighters " << unit.m_FighterStrength << " "
+			<< FighterStateToStr(unit.m_FighterState) << " ";
+		if (unit.m_FighterState == EFighterState::Defending)
+		{
+			out << unit.m_FighterTarget << " ";
+		}
+	}
+
 	if (IsFlagSet(unit.m_StatusFlags, f_Disrupted))
 		out << "disrupted ";
 	if (IsFlagSet(unit.m_StatusFlags, f_ReceivedFire))

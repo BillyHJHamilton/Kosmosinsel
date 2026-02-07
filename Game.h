@@ -30,6 +30,8 @@ public:
 	SCommandGroup* FindCommandGroup(STeam& team, const std::string& commander);
 	SUnit* FindUnit(int32_t id);
 
+	STeam* FindFollowingTeam (int32_t teamId);
+
 	bool TryFindUnits(const std::vector<int32_t>& unitsToFind, std::vector<SUnit*>& outUnits, int32_t& outInvalidId);
 	void AddUnit(const SUnit& newUnit);
 	void DestroyUnit(int32_t unitId);

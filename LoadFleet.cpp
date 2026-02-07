@@ -1,4 +1,6 @@
 #include "LoadFleet.h"
+
+#include "Fighters.h"
 #include "Formation.h"
 #include "Game.h"
 #include "Quality.h"
@@ -93,8 +95,11 @@ void CFleetLoader::ProcessUnit(std::stringstream& stream, CGame& game, int32_t u
 	// Defaults which may be overridden
 	newUnit.m_Quality = EQuality::Standard;
 	newUnit.m_Formation = EFormation::Line;
-	newUnit.m_Strength = FLT_MAX;
+	newUnit.m_FighterState = EFighterState::Docked;
+	newUnit.m_Strength = 1.0f;
 	newUnit.m_Morale = FLT_MAX;
+	newUnit.m_FighterStrength = 1.0f;
+	newUnit.m_FighterTarget = c_IndexNone;
 	newUnit.m_StatusFlags = f_None;
 
 	// Parse other arguments
@@ -106,10 +111,6 @@ void CFleetLoader::ProcessUnit(std::stringstream& stream, CGame& game, int32_t u
 	if (newUnit.m_Morale == FLT_MAX)
 	{
 		newUnit.m_Morale = GetStartingMorale(newUnit.m_Quality);
-	}
-	if (newUnit.m_Strength == FLT_MAX)
-	{
-		newUnit.m_Strength = 1.0f;
 	}
 
 	game.AddUnit(newUnit);
@@ -124,6 +125,7 @@ void CFleetLoader::ProcessUnitArgument(std::stringstream& stream, SUnit& unit)
 		LowercaseInPlace(argument);
 		EQuality quality = StrToQuality(argument);
 		EFormation formation = StrToFormation(argument);
+		EFighterState fighterState = StrToFighterState(argument);
 
 		if (quality != EQuality::None)
 		{
@@ -132,6 +134,23 @@ void CFleetLoader::ProcessUnitArgument(std::stringstream& stream, SUnit& unit)
 		else if (formation != EFormation::None)
 		{
 			unit.m_Formation = formation;
+		}
+		else if (fighterState != EFighterState::None)
+		{
+			unit.m_FighterState = fighterState;
+			if (fighterState == EFighterState::Defending)
+			{
+				int32_t defendTarget;
+				stream >> defendTarget;
+				if (stream)
+				{
+					unit.m_FighterTarget = defendTarget;
+				}
+				else
+				{
+					std::cout << "Failed to read defend target." << std::endl;
+				}
+			}
 		}
 		else if (argument == "morale")
 		{
@@ -157,6 +176,19 @@ void CFleetLoader::ProcessUnitArgument(std::stringstream& stream, SUnit& unit)
 			else
 			{
 				std::cout << "Failed to read strength." << std::endl;
+			}
+		}
+		else if (argument == "fighters")
+		{
+			float fighters;
+			stream >> fighters;
+			if (stream)
+			{
+				unit.m_FighterStrength = 1.0f;
+			}
+			else
+			{
+				std::cout << "Failed to read fighters." << std::endl;
 			}
 		}
 		else if (argument == "disrupted")

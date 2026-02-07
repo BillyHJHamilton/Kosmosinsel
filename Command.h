@@ -63,14 +63,19 @@ struct SUnit;
 
 enum class ECommand
 {
-    Near,
-    Far,
-    Attack,
-    Form,
-    Stat,
-    Test,
+    Near,       // Fire at near range
+    Far,        // Fire at far range
+    Attack,     // Engage in close battle
+    Form,       // Change formation
+    Stat,       // Print stats
+    Test,       // Test morale and become disrupted on failure
 
-    End,
+    Launch,     // Launch docked fighters
+    Strike,     // Fighters attack enemy unit
+    Defend,     // Fighters defend mother unit  (what about defending another allied unit?)
+    Recall,     // Fighters return to docking bays
+
+    End,        // End turn and attempt to rally disrupted units
 
     Undo,
     Load,
@@ -94,12 +99,21 @@ ECommand TryParseCommand(std::stringstream& stream);
 ECommand StrToCommand(std::string word);
 EFormation TryParseFormation(std::stringstream& stream);
 
+bool AreTeamsDistinct(const std::vector<SUnit*>& a, const std::vector<SUnit*>& b);
+
 void HandleFire(std::string& line, CGame& game, const SUnitFlagList& subjectList, const SUnitFlagList& targetList, EFireRange range);
 void HandleAttack(std::string& line, CGame& game, const SUnitFlagList& subjectList, const SUnitFlagList& targetList);
 void HandleForm(std::string& line, CGame& game, const SUnitFlagList& subjectList, EFormation formation);
 void HandleStat(std::string& line, CGame& game, const SUnitFlagList& subjectList);
 void HandleTest(std::string& line, CGame& game, const SUnitFlagList& subjectList);
+
+void HandleLaunch(std::string& line, CGame& game, const SUnitFlagList& subjectList);
+void HandleStrike(std::string& line, CGame& game, const SUnitFlagList& subjectList, const SUnitFlagList& targetList);
+void HandleDefend(std::string& line, CGame& game, const SUnitFlagList& subjectList, const SUnitFlagList& targetList);
+void HandleRecall(std::string& line, CGame& game, const SUnitFlagList& subjectList);
+
 void HandleEnd(std::string& line, std::stringstream& stream, CGame& game);
+
 void HandleUndo(CGame& game);
 void HandleLoad(std::stringstream& stream, CGame& game);
 void HandleSave(std::stringstream& stream, CGame& game);

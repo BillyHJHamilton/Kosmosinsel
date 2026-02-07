@@ -95,7 +95,6 @@ const SUnit* CGame::FindUnit(int32_t id) const
 	return nullptr;
 }
 
-
 STeam* CGame::FindTeam(int32_t teamId)
 {
 	return const_cast<STeam*>(const_cast<const CGame*>(this)->FindTeam(teamId));
@@ -114,6 +113,26 @@ SCommandGroup* CGame::FindCommandGroup(STeam& team, const std::string& commander
 SUnit* CGame::FindUnit(int32_t id)
 {
 	return const_cast<SUnit*>(const_cast<const CGame*>(this)->FindUnit(id));
+}
+
+STeam* CGame::FindFollowingTeam(int32_t teamId)
+{
+	for (int i = 0; i < m_GameState.m_Teams.size(); ++i)
+	{
+		if (m_GameState.m_Teams[i].m_TeamId == teamId)
+		{
+			if (i < m_GameState.m_Teams.size() - 1)
+			{
+				return &m_GameState.m_Teams[i + 1];
+			}
+			else
+			{
+				return &m_GameState.m_Teams[0];
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 bool CGame::TryFindUnits(const std::vector<int32_t>& unitsToFind, std::vector<SUnit*>& outUnits, int32_t& outInvalidId)

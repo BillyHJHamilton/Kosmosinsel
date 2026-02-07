@@ -2,10 +2,10 @@
 #include "Utility.h"
 
 SUnitTypeStats SUnitTypeStats::s_Stats [(int32_t)EUnitType::Count] =
-{					   // Spd   Fire   Bttl  Special
-	/* Battleships */	{ 1.0f, 1.0f, 1.0f, f_None },
-	/* Motherships */	{ 1.0f, 0.5f, 0.3f, f_Carrier },
-	/* Destroyers*/		{ 1.5f, 0.7f, 0.5f, f_AirDefence }
+{					   // Spd   Fire  Bttl  Ftrs
+	/* Battleships */	{ 1.0f, 1.0f, 1.0f, 1.0f },
+	/* Motherships */	{ 1.0f, 0.5f, 0.3f, 2.0f },
+	/* Destroyers*/		{ 1.5f, 0.7f, 0.5f, 0.0f }
 };
 
 const char* s_UnitTypeName [(int32_t)EUnitType::Count] =
